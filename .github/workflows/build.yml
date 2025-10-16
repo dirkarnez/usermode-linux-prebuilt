@@ -1,0 +1,67 @@
+name: cpp-cmake-mingw-prebuilt-release-actions-workflow
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'c*'
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+#     env:
+#       libraryName: libsndfile
+#       cmakeInstallationPath: libsndfile-installation
+#       tagName: 1.2.0 # target tag
+#       mingwTargetZip: libsndfile-${{ github.ref_name }}-mingw64-x86_64-posix-seh-rev0-8.1.0.zip
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: |
+          sudo apt-get update
+          
+      - run: |
+          sudo apt-get -y --no-install-recommends install build-essential
+          
+      - run: |
+          sudo apt-get -y --no-install-recommends install bison
+          
+      - run: |
+          sudo apt-get -y --no-install-recommends install flex
+        
+      - run: |
+          sudo apt-get -y --no-install-recommends install libssl-dev
+          
+      - run: |
+          sudo apt-get -y --no-install-recommends install libelf-dev
+          
+      - run: |
+          sudo apt-get -y --no-install-recommends install bc
+          
+      - run: |
+          sudo apt-get -y --no-install-recommends install curl
+          
+      - run: |
+          sudo apt-get -y --no-install-recommends install ca-certificates
+          
+      - run: |
+          sudo apt-get clean && \
+          sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+          
+      - run: |
+          curl https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.12.10.tar.xz -L -O -J && \
+          tar -xf linux-5.12.10.tar.xz
+          
+      - run: |
+          cd linux-5.12.10 && \
+          cp ../.config .config && \
+          make olddefconfig  && \
+          make -j8
+          
+      - name: Release prebuilt
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "linux-5.12.10/arch/x86_64/boot/bzImage"
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
